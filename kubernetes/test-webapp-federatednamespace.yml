@@ -1,0 +1,11 @@
+apiVersion: types.kubefed.io/v1beta1
+kind: FederatedNamespace
+metadata:
+  name: webapp
+  namespace: webapp
+spec:
+    placement:
+        clusters:
+        - name: euw1
+        - name: usc1
+        - name: eks

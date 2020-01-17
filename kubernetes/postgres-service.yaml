@@ -1,14 +1,20 @@
-apiVersion: v1
-kind: Service
+apiVersion: types.kubefed.io/v1beta1
+kind: FederatedService
 metadata:
-  labels:
-    app: postgres
   name: postgres
+  namespace: webapp
 spec:
-  type: NodePort
-  ports:
-    - port: 5432
-  selector:
-    app: postgres
+  template:
+    spec:
+      type: NodePort
+      ports:
+        - port: 5432
+      selector:
+        app: postgres
+  placement:
+    clusters:
+      - name: euw1
+      - name: usc1
+      - name: eks
 status:
   loadBalancer: {}

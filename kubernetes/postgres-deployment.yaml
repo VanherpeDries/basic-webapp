@@ -1,34 +1,42 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: types.kubefed.io/v1beta1
+kind: FederatedDeployment
 metadata:
-  labels:
-    app: postgres
   name: postgres
+  namespace: webapp
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-     app: postgres
-  strategy: {}
   template:
     metadata:
-      annotations:
-        kompose.cmd: kompose convert
-        kompose.version: 1.19.0 (f63a961c)
-      creationTimestamp: null
       labels:
-        app: postgres
+        app: nginx
     spec:
-      containers:
-      - env:
-        - name: POSTGRES_DB
-          value: labo
-        - name: POSTGRES_PASSWORD
-          value: student_password
-        - name: POSTGRES_USER
-          value: student_user
-        image: postgres:12.1-alpine
-        name: postgres
-        resources: {}
-      restartPolicy: Always
-status: {}
+      replicas: 2
+      selector:
+        matchLabels:
+          app: postgres
+      template:
+        metadata:
+          annotations:
+            kompose.cmd: kompose convert
+            kompose.version: 1.19.0 (f63a961c)
+          creationTimestamp: null
+          labels:
+            app: postgres
+        spec:
+          containers:
+          - env:
+            - name: POSTGRES_DB
+              value: labo
+            - name: POSTGRES_PASSWORD
+              value: student_password
+            - name: POSTGRES_USER
+              value: student_user
+            image: postgres:12.1-alpine
+            name: postgres
+            resources: {}
+          restartPolicy: Always
+  placement:
+    clusters:
+      - name: euw1
+      - name: usc1
+      - name: eks
+

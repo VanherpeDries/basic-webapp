@@ -1,37 +1,45 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: types.kubefed.io/v1beta1
+kind: FederatedDeployment
 metadata:
-  labels:
-    app: webapp
   name: webapp
+  namespace: webapp
 spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: webapp
-  strategy: {}
   template:
     metadata:
       labels:
-        app: webapp
+        app: nginx
     spec:
-      containers:
-      - args:
-        - uwsgi
-        - --ini
-        - app.ini
-        env:
-        - name: PG_DATABASE
-          value: labo
-        - name: PG_HOST
-          value: postgres
-        - name: PG_PASSWORD
-          value: student_password
-        - name: PG_PORT
-          value: "5432"
-        - name: PG_USER
-          value: student_user
-        image: eslih/basic-webapp:v1.0.9
-        name: webapp
-        resources: {}
-      restartPolicy: Always
+      replicas: 3
+      selector:
+        matchLabels:
+          app: webapp
+      template:
+        metadata:
+          labels:
+            app: webapp
+        spec:
+          containers:
+          - args:
+            - uwsgi
+            - --ini
+            - app.ini
+            env:
+            - name: PG_DATABASE
+              value: labo
+            - name: PG_HOST
+              value: postgres
+            - name: PG_PASSWORD
+              value: student_password
+            - name: PG_PORT
+              value: "5432"
+            - name: PG_USER
+              value: student_user
+            image: eslih/basic-webapp:v1.0.9
+            name: webapp
+            resources: {}
+          restartPolicy: Always
+  placement:
+    clusters:
+      - name: euw1
+      - name: usc1
+      - name: eks

@@ -1,15 +1,22 @@
-apiVersion: v1
-kind: Service
+apiVersion: types.kubefed.io/v1beta1
+kind: FederatedService
 metadata:
-  labels:
-    app: nginx
   name: nginx
+  namespace: webapp
 spec:
-  ports:
-  - name: "80"
-    port: 80
-    targetPort: 80
-  selector:
-    app: nginx
+  template:
+    spec:
+      selector:
+        app: nginx
+      type: LoadBalancer
+      ports:
+        - name: http
+          port: 80
+  placement:
+    clusters:
+      - name: euw1
+      - name: usc1
+      - name: eks
 status:
   loadBalancer: {}
+      
