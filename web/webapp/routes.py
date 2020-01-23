@@ -1,11 +1,17 @@
-from flask import url_for, render_template, request, redirect, session, g
+from flask import url_for, render_template, request, redirect, session, g, jsonify
 from flask import current_app as app
-from .models import db, User
+from . import db
 import socket
 import time
 import threading
 from random import randint
-
+import os
+import firebase_admin
+from firebase_admin import credentials
+from google.cloud import firestore
+from firebase_admin import firestore
+from google.cloud import firestore
+from firebase_admin import initialize_app
 
 @app.context_processor
 def inject_hostname():
@@ -25,9 +31,14 @@ def delete_users():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     try:
-        num_deleted = User.delete_users()
+        #num_deleted = User.delete_users()
         session['logged_in'] = False
-        return render_template('users.html', message='All users (' + str(num_deleted) + ') are deleted.')
+        batch = db.batch()
+        print(str(batch))
+        ref = db.collection('webapp').stream()
+        for i in ref :
+            db.collection('webapp').document(i.id).delete()
+        return render_template('users.html', message='All users are deleted.')
     except Exception as e:
         return "Some very good exception handling!" + str(e)
 
@@ -37,8 +48,12 @@ def users():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     try:
-        data = User.query.all()
-        return render_template('users.html', users=data)
+        userlist = []
+        webapp_ref = db.collection('webapp')
+        start_at_name_and_state = webapp_ref.stream()
+        for i in start_at_name_and_state:
+            userlist.append((i.to_dict()))
+        return render_template('users.html', users=userlist)
     except Exception as e:
         return "Some very good exception handling!" + str(e)
 
@@ -51,15 +66,20 @@ def login():
         username = request.form['username']
         password = request.form['password']
         try:
-            data = User.query.filter_by(username=username, password=password).first()
+            userlist = []
+            webapp_ref = db.collection('webapp')
+            start_at_name_and_state = webapp_ref.where(u'user',u'==', username).where(u'pwd',u'==', password).stream()
+            for i in start_at_name_and_state :
+                userlist.append((i.to_dict()))
 
-            if data is not None:
+            if ( len(userlist)== 1) :
                 session['logged_in'] = True
                 return redirect(url_for('home'))
-            else:
+            else :
                 return render_template('index.html', data={'username': username, 'password': password})
 
         except Exception as e:
+            print(str(e))
             return "Some very good exception handling!"
 
 
@@ -67,16 +87,23 @@ def login():
 def register():
     if request.method == 'POST':
         try:
-            data = User.query.filter_by(username=request.form['username']).first()
-            if data:
+            username = request.form['username']
+            password = request.form['password']
+            webapp_ref = db.collection('webapp')
+            userlist = []
+            start_at_name_and_state = webapp_ref.where(u'user',u'==', username).where(u'pwd',u'==', password).stream()
+            for i in start_at_name_and_state:
+                userlist.append((i.to_dict()))
+
+            if ( len(userlist) == 1 ):
                 return render_template('register.html', error='A user with this username already exits!')
 
-            new_user = User(username=request.form['username'], password=request.form['password'])
+            user = {"user": username, "pwd": password}
+            webapp_ref.add(user)
 
-            db.session.add(new_user)
-            db.session.commit()
+
         except Exception as e:
-            return "Some very good exception handling!" + str(e)
+            return "Some very good exception handling! " + str(e)
 
         return render_template('login.html')
     return render_template('register.html')
